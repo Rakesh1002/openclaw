@@ -95,6 +95,7 @@ async function runExecWithExit(params: {
         }
       }
       return {
+        activity: { resultSettled: true, lastOutputAtMs: Date.now() },
         runId: "run-exit",
         startedAtMs: Date.now(),
         pid: 123,
@@ -122,6 +123,7 @@ function runtimeManagedRun(input: SpawnInput, stdout = ""): ManagedRun {
     input.onStdout?.(stdout);
   }
   return {
+    activity: { resultSettled: true, lastOutputAtMs: Date.now() },
     runId: input.runId ?? "test-run",
     pid: 1234,
     startedAtMs: Date.now(),
@@ -550,11 +552,19 @@ describe("sandbox exec finalization suspension", () => {
       supervisorMock.spawn.mockImplementationOnce(async (input: SpawnInput) => {
         producer = input;
         input.onStdout?.("sandbox output\n");
+        const activity = { resultSettled: false, lastOutputAtMs: Date.now() };
         return {
+          activity,
           runId: "sandbox-run",
           startedAtMs: Date.now(),
           pid: 123,
-          wait: async () => await exit.promise,
+          wait: async () => {
+            try {
+              return await exit.promise;
+            } finally {
+              activity.resultSettled = true;
+            }
+          },
           cancel: vi.fn(),
         };
       });
