@@ -110,11 +110,13 @@ describe("agent exec command composition", () => {
           expect(input).toMatchObject({
             mode: "child",
             backendId: "construction-cli",
-            timeoutMs: 1_000,
           });
+          const remainingMs = expectDefined(input.timeoutMs, "remaining construction deadline");
+          expect(remainingMs).toBeGreaterThan(0);
+          expect(remainingMs).toBeLessThanOrEqual(1_000);
           const runId = expectDefined(input.runId, "command supervisor run ID");
           expect(supervisor.getRecord(runId)).toMatchObject({ state: "starting" });
-          await vi.advanceTimersByTimeAsync(999);
+          await vi.advanceTimersByTimeAsync(remainingMs - 1);
           expect(supervisor.getRecord(runId)).toMatchObject({ state: "starting" });
           await vi.advanceTimersByTimeAsync(1);
           expect(supervisor.getRecord(runId)).toMatchObject({
