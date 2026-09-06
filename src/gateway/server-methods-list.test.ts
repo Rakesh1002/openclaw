@@ -93,6 +93,7 @@ describe("listGatewayMethods", () => {
       "gateway.suspend.handoff",
       "update.report",
       "skills.workshop.read",
+      "session.publicShare.set",
     ]);
   });
 
